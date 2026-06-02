@@ -23,6 +23,8 @@ namespace DrawingCollector.UI
     /// </summary>
     public class ListGeneratorForm : Form
     {
+        private const int StepCardMinWidth = 260;
+
         private RadioButton rbPaste = null!;
         private RadioButton rbExcel = null!;
         private Panel pasteArea = null!;
@@ -40,6 +42,7 @@ namespace DrawingCollector.UI
         private RoundedButton btnGenerate = null!;
         private RoundedButton btnOpenOutput = null!;
         private ILogger logger = null!;
+        private readonly ToolTip pathToolTip = new() { ShowAlways = true, AutoPopDelay = 15000, InitialDelay = 150, ReshowDelay = 100 };
 
         private string lastOutputFolder = string.Empty;
 
@@ -48,7 +51,7 @@ namespace DrawingCollector.UI
             Text = "Gerar Listas";
             StartPosition = FormStartPosition.CenterParent;
             ClientSize = new Size(1080, 740);
-            MinimumSize = new Size(980, 680);
+            MinimumSize = new Size(880, 620);
             Font = new Font("Segoe UI", 10f);
             AutoScaleMode = AutoScaleMode.Dpi;
             BackColor = Color.FromArgb(244, 247, 252);
@@ -59,6 +62,14 @@ namespace DrawingCollector.UI
             BuildLayout();
             logger = new RichTextBoxLogger(rtbLog);
             UpdateInputMode();
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+                pathToolTip.Dispose();
+
+            base.Dispose(disposing);
         }
 
         private void BuildLayout()
@@ -72,13 +83,10 @@ namespace DrawingCollector.UI
             };
             root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 285));
-            // A pasta do projeto precisa de altura fixa.
-            // Antes esta linha era AutoSize e, em telas/DPI altos, o TableLayoutPanel
-            // podia recolher o card, deixando o campo e o botão quase invisíveis.
-            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 128));
+            root.RowStyles.Add(new RowStyle(SizeType.Percent, 54f));
             root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            root.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+            root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            root.RowStyles.Add(new RowStyle(SizeType.Percent, 46f));
             Controls.Add(root);
 
             root.Controls.Add(new GradientHeader
@@ -101,63 +109,67 @@ namespace DrawingCollector.UI
 
         private Control BuildFlowHint()
         {
-            var flow = new TableLayoutPanel
+            var flow = new FlowLayoutPanel
             {
                 Dock = DockStyle.Top,
-                ColumnCount = 3,
                 AutoSize = true,
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = true,
                 Margin = new Padding(0, 0, 0, 14),
+                BackColor = Color.Transparent,
             };
-            flow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33f));
-            flow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33f));
-            flow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33f));
 
-            flow.Controls.Add(MakeStep("1", "Entrada", "Cole a lista completa ou selecione o Excel da Lista Geral."), 0, 0);
-            flow.Controls.Add(MakeStep("2", "Pasta do projeto", "Escolha onde salvar Lista Geral, Fornecedor e Barramento."), 1, 0);
-            flow.Controls.Add(MakeStep("3", "Gerar", "O sistema usa os templates reais e mantém as fórmulas."), 2, 0);
+            flow.Controls.Add(MakeStep("1", "Entrada", "Cole a lista completa ou selecione o Excel da Lista Geral."));
+            flow.Controls.Add(MakeStep("2", "Pasta do projeto", "Escolha onde salvar Lista Geral, Fornecedor e Barramento."));
+            flow.Controls.Add(MakeStep("3", "Gerar", "O sistema usa os templates reais e mantém as fórmulas."));
             return flow;
         }
 
         private Control MakeStep(string number, string title, string text)
         {
-            var panel = new Panel
+            var panel = new TableLayoutPanel
             {
-                Dock = DockStyle.Fill,
-                Height = 74,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                ColumnCount = 2,
+                RowCount = 2,
                 BackColor = Color.White,
                 Padding = new Padding(14, 10, 14, 10),
-                Margin = new Padding(0, 0, 10, 0),
+                Margin = new Padding(0, 0, 10, 10),
+                MinimumSize = new Size(StepCardMinWidth, 0),
             };
+            panel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
 
             var badge = new CircleBadge(number, Palette.Primary)
             {
-                Size     = new Size(34, 34),
-                Location = new Point(14, 18),
+                Size = new Size(34, 34),
+                Margin = new Padding(0, 2, 10, 0),
             };
-            panel.Controls.Add(badge);
+            panel.Controls.Add(badge, 0, 0);
+            panel.SetRowSpan(badge, 2);
 
             var lblTitle = new Label
             {
-                AutoSize = false,
+                AutoSize = true,
                 Text = title,
                 Font = new Font("Segoe UI Semibold", 10.5f),
                 ForeColor = Color.FromArgb(30, 36, 52),
-                Location = new Point(58, 10),
-                Size = new Size(265, 24),
+                Margin = new Padding(0, 0, 0, 2),
             };
-            panel.Controls.Add(lblTitle);
+            panel.Controls.Add(lblTitle, 1, 0);
 
             var lblText = new Label
             {
-                AutoSize = false,
+                AutoSize = true,
                 Text = text,
                 Font = new Font("Segoe UI", 8.9f),
                 ForeColor = Color.FromArgb(90, 98, 116),
-                Location = new Point(58, 34),
-                Size = new Size(270, 34),
+                MaximumSize = new Size(188, 0),
+                Margin = new Padding(0),
             };
-            panel.Controls.Add(lblText);
+            panel.Controls.Add(lblText, 1, 1);
             return panel;
         }
 
@@ -169,9 +181,10 @@ namespace DrawingCollector.UI
             var modes = new FlowLayoutPanel
             {
                 Dock = DockStyle.Top,
-                Height = 42,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 FlowDirection = FlowDirection.LeftToRight,
-                WrapContents = false,
+                WrapContents = true,
                 BackColor = Color.White,
                 Margin = new Padding(0, 0, 0, 8),
             };
@@ -239,7 +252,7 @@ namespace DrawingCollector.UI
             var footer = new Panel
             {
                 Dock = DockStyle.Bottom,
-                Height = 34,
+                AutoSize = true,
                 BackColor = Color.White,
                 Padding = new Padding(0, 7, 0, 0),
             };
@@ -313,6 +326,7 @@ namespace DrawingCollector.UI
                 Dock = DockStyle.Fill,
                 PlaceholderText = "Selecione ou arraste aqui o Excel da Lista Geral (.xlsx)...",
             };
+            ConfigurePathTextBox(txtExcelPath);
             txtExcelPath.TextChanged += (_, __) => OnExcelPathChanged();
             txtExcelPath.AllowDrop = true;
             txtExcelPath.DragEnter += OnDragEnter;
@@ -333,15 +347,18 @@ namespace DrawingCollector.UI
             fileRow.Controls.Add(btnSelectExcel, 1, 0);
             layout.Controls.Add(fileRow, 0, 0);
 
-            var sheetRow = new FlowLayoutPanel
+            var sheetRow = new TableLayoutPanel
             {
                 Dock = DockStyle.Top,
-                Height = 42,
-                FlowDirection = FlowDirection.LeftToRight,
-                WrapContents = false,
+                ColumnCount = 2,
                 BackColor = Color.White,
                 Margin = new Padding(0, 0, 0, 8),
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
             };
+            sheetRow.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            sheetRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+
             sheetRow.Controls.Add(new Label
             {
                 Text = "Aba da lista:",
@@ -349,36 +366,40 @@ namespace DrawingCollector.UI
                 Font = new Font("Segoe UI Semibold", 9.7f),
                 ForeColor = Color.FromArgb(30, 36, 52),
                 Margin = new Padding(0, 6, 8, 0),
-            });
+            }, 0, 0);
 
             cmbSheets = new ComboBox
             {
                 DropDownStyle = ComboBoxStyle.DropDownList,
+                Dock = DockStyle.Left,
                 Width = 220,
-                Margin = new Padding(0, 2, 12, 0),
+                Margin = new Padding(0, 2, 0, 0),
             };
-            sheetRow.Controls.Add(cmbSheets);
+            sheetRow.Controls.Add(cmbSheets, 1, 0);
+            layout.Controls.Add(sheetRow, 0, 1);
 
-            sheetRow.Controls.Add(new Label
+            var info = new Label
             {
                 Text = "As colunas são detectadas pelo modelo padrão da Lista Geral.",
                 AutoSize = true,
                 Font = new Font("Segoe UI", 9f),
                 ForeColor = Color.FromArgb(96, 104, 122),
-                Margin = new Padding(0, 6, 0, 0),
-            });
-            layout.Controls.Add(sheetRow, 0, 1);
+                MaximumSize = new Size(520, 0),
+                Margin = new Padding(0, 0, 0, 4),
+            };
+            layout.Controls.Add(info, 0, 2);
 
-            var info = new Label
+            var detail = new Label
             {
                 Dock = DockStyle.Top,
                 AutoSize = true,
                 Text = "Não é necessário escolher coluna, REV. ou cabeçalho. Para Excel, o sistema lê a aba Lista geral no padrão do template: linha 3 = cabeçalho, linha 4 em diante = itens.",
                 Font = new Font("Segoe UI", 9f),
                 ForeColor = Color.FromArgb(96, 104, 122),
-                Margin = new Padding(0, 4, 0, 0),
+                MaximumSize = new Size(700, 0),
+                Margin = new Padding(0, 0, 0, 0),
             };
-            layout.Controls.Add(info, 0, 2);
+            layout.Controls.Add(detail, 0, 3);
 
             return panel;
         }
@@ -415,6 +436,7 @@ namespace DrawingCollector.UI
                 Height          = 32,
                 PlaceholderText = "Selecione a pasta do projeto onde serão salvos os arquivos...",
             };
+            ConfigurePathTextBox(txtOutput);
             outputRow.Controls.Add(txtOutput, 0, 0);
 
             var btnSelectOutput = new RoundedButton
@@ -508,14 +530,14 @@ namespace DrawingCollector.UI
             var row = new TableLayoutPanel
             {
                 Dock = DockStyle.Top,
-                ColumnCount = 2,
+                ColumnCount = 1,
+                RowCount = 2,
                 AutoSize = true,
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 Margin = new Padding(0, 0, 0, 14),
                 BackColor = Color.FromArgb(244, 247, 252),
             };
             row.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-            row.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
 
             lblStatus = new Label
             {
@@ -525,16 +547,19 @@ namespace DrawingCollector.UI
                 Font = new Font("Segoe UI", 9.5f),
                 ForeColor = Color.FromArgb(96, 104, 122),
                 Padding = new Padding(2, 0, 0, 0),
+                AutoSize = true,
+                Margin = new Padding(0, 0, 0, 8),
             };
             row.Controls.Add(lblStatus, 0, 0);
 
             var actions = new FlowLayoutPanel
             {
-                Dock = DockStyle.Right,
+                Dock = DockStyle.Fill,
                 AutoSize = true,
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                FlowDirection = FlowDirection.LeftToRight,
-                WrapContents = false,
+                FlowDirection = FlowDirection.RightToLeft,
+                WrapContents = true,
+                Margin = new Padding(0),
             };
 
             btnGenerate = new RoundedButton
@@ -573,7 +598,7 @@ namespace DrawingCollector.UI
             btnBack.Click += (_, __) => Close();
             actions.Controls.Add(btnBack);
 
-            row.Controls.Add(actions, 1, 0);
+            row.Controls.Add(actions, 0, 1);
             return row;
         }
 
@@ -658,6 +683,24 @@ namespace DrawingCollector.UI
                 lblStatus.Text = "Modo colar: cole a lista completa do Solid Edge.";
             else
                 lblStatus.Text = "Modo Excel: selecione a planilha da Lista Geral.";
+        }
+
+        private void ConfigurePathTextBox(TextBox textBox)
+        {
+            UpdateTooltip(textBox, textBox.Text);
+            textBox.TextChanged -= OnPathTextChanged;
+            textBox.TextChanged += OnPathTextChanged;
+        }
+
+        private void UpdateTooltip(Control control, string? text)
+        {
+            pathToolTip.SetToolTip(control, string.IsNullOrWhiteSpace(text) ? null : text.Trim());
+        }
+
+        private void OnPathTextChanged(object? sender, EventArgs e)
+        {
+            if (sender is TextBox textBox)
+                UpdateTooltip(textBox, textBox.Text);
         }
 
         /// <summary>

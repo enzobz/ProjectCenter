@@ -1,0 +1,24 @@
+/tmp/workspace/enzobz/ProjectCenter/CentralProjetos/bin/Debug/net8.0-windows/logo.ico
+/tmp/workspace/enzobz/ProjectCenter/CentralProjetos/bin/Debug/net8.0-windows/modelos/LEP2XXXX-LISTA GERAL-FORNECEDOR-CH-R00.xlsx
+/tmp/workspace/enzobz/ProjectCenter/CentralProjetos/bin/Debug/net8.0-windows/modelos/LEPXXXX-PXXXX-C0X-BA-R00.xlsx
+/tmp/workspace/enzobz/ProjectCenter/CentralProjetos/bin/Debug/net8.0-windows/modelos/LEPXXXX-PXXXX-C0X-CH-R00.xlsx
+/tmp/workspace/enzobz/ProjectCenter/CentralProjetos/bin/Debug/net8.0-windows/CentralProjetos
+/tmp/workspace/enzobz/ProjectCenter/CentralProjetos/bin/Debug/net8.0-windows/CentralProjetos.deps.json
+/tmp/workspace/enzobz/ProjectCenter/CentralProjetos/bin/Debug/net8.0-windows/CentralProjetos.runtimeconfig.json
+/tmp/workspace/enzobz/ProjectCenter/CentralProjetos/bin/Debug/net8.0-windows/CentralProjetos.dll
+/tmp/workspace/enzobz/ProjectCenter/CentralProjetos/bin/Debug/net8.0-windows/ClosedXML.dll
+/tmp/workspace/enzobz/ProjectCenter/CentralProjetos/bin/Debug/net8.0-windows/DocumentFormat.OpenXml.dll
+/tmp/workspace/enzobz/ProjectCenter/CentralProjetos/bin/Debug/net8.0-windows/ExcelNumberFormat.dll
+/tmp/workspace/enzobz/ProjectCenter/CentralProjetos/bin/Debug/net8.0-windows/Irony.dll
+/tmp/workspace/enzobz/ProjectCenter/CentralProjetos/bin/Debug/net8.0-windows/SixLabors.Fonts.dll
+/tmp/workspace/enzobz/ProjectCenter/CentralProjetos/bin/Debug/net8.0-windows/XLParser.dll
+/tmp/workspace/enzobz/ProjectCenter/CentralProjetos/obj/Debug/net8.0-windows/DrawingCollector.csproj.AssemblyReference.cache
+/tmp/workspace/enzobz/ProjectCenter/CentralProjetos/obj/Debug/net8.0-windows/DrawingCollector.GeneratedMSBuildEditorConfig.editorconfig
+/tmp/workspace/enzobz/ProjectCenter/CentralProjetos/obj/Debug/net8.0-windows/DrawingCollector.AssemblyInfoInputs.cache
+/tmp/workspace/enzobz/ProjectCenter/CentralProjetos/obj/Debug/net8.0-windows/DrawingCollector.AssemblyInfo.cs
+/tmp/workspace/enzobz/ProjectCenter/CentralProjetos/obj/Debug/net8.0-windows/DrawingCollector.csproj.CoreCompileInputs.cache
+/tmp/workspace/enzobz/ProjectCenter/CentralProjetos/obj/Debug/net8.0-windows/DrawingC.BEFA625D.Up2Date
+/tmp/workspace/enzobz/ProjectCenter/CentralProjetos/obj/Debug/net8.0-windows/CentralProjetos.dll
+/tmp/workspace/enzobz/ProjectCenter/CentralProjetos/obj/Debug/net8.0-windows/refint/CentralProjetos.dll
+/tmp/workspace/enzobz/ProjectCenter/CentralProjetos/obj/Debug/net8.0-windows/DrawingCollector.genruntimeconfig.cache
+/tmp/workspace/enzobz/ProjectCenter/CentralProjetos/obj/Debug/net8.0-windows/ref/CentralProjetos.dll
