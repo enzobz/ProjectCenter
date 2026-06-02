@@ -24,6 +24,9 @@ namespace DrawingCollector.UI
     /// </summary>
     public class GuidedFinalizerForm : Form
     {
+        private const int StepCardMinWidth = 200;
+        private const int ResponsiveBreakpoint = 1100;
+
         private RadioButton rbPaste = null!;
         private RadioButton rbExcel = null!;
         private Panel pasteArea = null!;
@@ -50,6 +53,7 @@ namespace DrawingCollector.UI
         private TableLayoutPanel mainContentLayout = null!;
         private Control mainInputCard = null!;
         private Control mainSideCards = null!;
+        private int lastRootTooltipIndex = -1;
         private string lastRootTooltipText = string.Empty;
         private string lastProjectFolder = string.Empty;
 
@@ -58,7 +62,7 @@ namespace DrawingCollector.UI
             Text = "Finalização Guiada";
             StartPosition = FormStartPosition.CenterParent;
             ClientSize = new Size(1120, 780);
-            MinimumSize = new Size(900, 680);
+            MinimumSize = new Size(940, 680);
             Font = new Font("Segoe UI", 10f);
             AutoScaleMode = AutoScaleMode.Dpi;
             BackColor = Color.FromArgb(244, 247, 252);
@@ -74,13 +78,20 @@ namespace DrawingCollector.UI
             Resize += (_, __) => UpdateResponsiveLayout();
         }
 
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+                pathToolTip.Dispose();
+
+            base.Dispose(disposing);
+        }
+
         private void BuildLayout()
         {
             var root = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 1,
-                RowCount = 5,
                 Padding = new Padding(24),
                 BackColor = Color.FromArgb(244, 247, 252),
             };
@@ -140,7 +151,7 @@ namespace DrawingCollector.UI
                 BackColor = Color.White,
                 Padding = new Padding(14, 10, 14, 10),
                 Margin = new Padding(0, 0, 10, 10),
-                MinimumSize = new Size(220, 0),
+                MinimumSize = new Size(StepCardMinWidth, 0),
             };
             panel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
@@ -168,7 +179,7 @@ namespace DrawingCollector.UI
                 Text = text,
                 Font = new Font("Segoe UI", 8.6f),
                 ForeColor = Color.FromArgb(90, 98, 116),
-                MaximumSize = new Size(230, 0),
+                MaximumSize = new Size(128, 0),
                 Margin = new Padding(0),
             }, 1, 1);
             return panel;
@@ -534,7 +545,6 @@ namespace DrawingCollector.UI
             {
                 Dock = DockStyle.Top,
                 ColumnCount = 1,
-                RowCount = 6,
                 AutoSize = true,
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 BackColor = Color.White,
@@ -769,7 +779,15 @@ namespace DrawingCollector.UI
             };
             row.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
 
-            var left = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Margin = new Padding(0, 0, 0, 8) };
+            var left = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 1,
+                RowCount = 2,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Margin = new Padding(0, 0, 0, 8),
+            };
             lblStatus = new Label
             {
                 Dock = DockStyle.Top,
@@ -1237,7 +1255,8 @@ namespace DrawingCollector.UI
         private void ConfigurePathTextBox(TextBox textBox)
         {
             UpdateTooltip(textBox, textBox.Text);
-            textBox.TextChanged += (_, __) => UpdateTooltip(textBox, textBox.Text);
+            textBox.TextChanged -= OnPathTextChanged;
+            textBox.TextChanged += OnPathTextChanged;
         }
 
         private void UpdateTooltip(Control control, string? text)
@@ -1250,11 +1269,10 @@ namespace DrawingCollector.UI
             if (lstRoots == null) return;
 
             int maxWidth = 0;
-            using var graphics = lstRoots.CreateGraphics();
             foreach (var item in lstRoots.Items)
             {
                 string text = item?.ToString() ?? string.Empty;
-                maxWidth = Math.Max(maxWidth, TextRenderer.MeasureText(graphics, text, lstRoots.Font).Width);
+                maxWidth = Math.Max(maxWidth, TextRenderer.MeasureText(text, lstRoots.Font).Width);
             }
 
             lstRoots.HorizontalExtent = maxWidth + 24;
@@ -1263,14 +1281,19 @@ namespace DrawingCollector.UI
         private void UpdateRootsTooltip(int index)
         {
             if (lstRoots == null) return;
+            if (index == lastRootTooltipIndex) return;
 
             string tooltipText = index >= 0 && index < lstRoots.Items.Count
                 ? lstRoots.Items[index]?.ToString() ?? string.Empty
                 : string.Empty;
 
             if (string.Equals(lastRootTooltipText, tooltipText, StringComparison.Ordinal))
+            {
+                lastRootTooltipIndex = index;
                 return;
+            }
 
+            lastRootTooltipIndex = index;
             lastRootTooltipText = tooltipText;
             UpdateTooltip(lstRoots, tooltipText);
         }
@@ -1280,7 +1303,7 @@ namespace DrawingCollector.UI
             if (mainContentLayout == null || mainInputCard == null || mainSideCards == null)
                 return;
 
-            bool stacked = ClientSize.Width < 1100;
+            bool stacked = ClientSize.Width < ResponsiveBreakpoint;
 
             mainContentLayout.SuspendLayout();
             mainContentLayout.Controls.Clear();
@@ -1311,6 +1334,12 @@ namespace DrawingCollector.UI
             }
 
             mainContentLayout.ResumeLayout(true);
+        }
+
+        private void OnPathTextChanged(object? sender, EventArgs e)
+        {
+            if (sender is TextBox textBox)
+                UpdateTooltip(textBox, textBox.Text);
         }
 
         private void RunAutomaticFinalization(

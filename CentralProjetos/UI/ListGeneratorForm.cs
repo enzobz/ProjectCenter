@@ -23,6 +23,8 @@ namespace DrawingCollector.UI
     /// </summary>
     public class ListGeneratorForm : Form
     {
+        private const int StepCardMinWidth = 260;
+
         private RadioButton rbPaste = null!;
         private RadioButton rbExcel = null!;
         private Panel pasteArea = null!;
@@ -49,7 +51,7 @@ namespace DrawingCollector.UI
             Text = "Gerar Listas";
             StartPosition = FormStartPosition.CenterParent;
             ClientSize = new Size(1080, 740);
-            MinimumSize = new Size(840, 620);
+            MinimumSize = new Size(880, 620);
             Font = new Font("Segoe UI", 10f);
             AutoScaleMode = AutoScaleMode.Dpi;
             BackColor = Color.FromArgb(244, 247, 252);
@@ -62,13 +64,20 @@ namespace DrawingCollector.UI
             UpdateInputMode();
         }
 
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+                pathToolTip.Dispose();
+
+            base.Dispose(disposing);
+        }
+
         private void BuildLayout()
         {
             var root = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 1,
-                RowCount = 6,
                 Padding = new Padding(24),
                 BackColor = Color.FromArgb(244, 247, 252),
             };
@@ -128,7 +137,7 @@ namespace DrawingCollector.UI
                 BackColor = Color.White,
                 Padding = new Padding(14, 10, 14, 10),
                 Margin = new Padding(0, 0, 10, 10),
-                MinimumSize = new Size(280, 0),
+                MinimumSize = new Size(StepCardMinWidth, 0),
             };
             panel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
             panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
@@ -157,7 +166,7 @@ namespace DrawingCollector.UI
                 Text = text,
                 Font = new Font("Segoe UI", 8.9f),
                 ForeColor = Color.FromArgb(90, 98, 116),
-                MaximumSize = new Size(260, 0),
+                MaximumSize = new Size(188, 0),
                 Margin = new Padding(0),
             };
             panel.Controls.Add(lblText, 1, 1);
@@ -679,12 +688,19 @@ namespace DrawingCollector.UI
         private void ConfigurePathTextBox(TextBox textBox)
         {
             UpdateTooltip(textBox, textBox.Text);
-            textBox.TextChanged += (_, __) => UpdateTooltip(textBox, textBox.Text);
+            textBox.TextChanged -= OnPathTextChanged;
+            textBox.TextChanged += OnPathTextChanged;
         }
 
         private void UpdateTooltip(Control control, string? text)
         {
             pathToolTip.SetToolTip(control, string.IsNullOrWhiteSpace(text) ? null : text.Trim());
+        }
+
+        private void OnPathTextChanged(object? sender, EventArgs e)
+        {
+            if (sender is TextBox textBox)
+                UpdateTooltip(textBox, textBox.Text);
         }
 
         /// <summary>
