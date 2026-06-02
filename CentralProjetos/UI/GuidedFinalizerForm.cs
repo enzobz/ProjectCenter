@@ -46,6 +46,11 @@ namespace DrawingCollector.UI
         private RoundedButton btnOpenProject = null!;
         private CancellationTokenSource? cts;
         private ILogger logger = null!;
+        private readonly ToolTip pathToolTip = new() { ShowAlways = true, AutoPopDelay = 15000, InitialDelay = 150, ReshowDelay = 100 };
+        private TableLayoutPanel mainContentLayout = null!;
+        private Control mainInputCard = null!;
+        private Control mainSideCards = null!;
+        private string lastRootTooltipText = string.Empty;
         private string lastProjectFolder = string.Empty;
 
         public GuidedFinalizerForm()
@@ -53,7 +58,7 @@ namespace DrawingCollector.UI
             Text = "Finalização Guiada";
             StartPosition = FormStartPosition.CenterParent;
             ClientSize = new Size(1120, 780);
-            MinimumSize = new Size(1020, 720);
+            MinimumSize = new Size(900, 680);
             Font = new Font("Segoe UI", 10f);
             AutoScaleMode = AutoScaleMode.Dpi;
             BackColor = Color.FromArgb(244, 247, 252);
@@ -65,6 +70,8 @@ namespace DrawingCollector.UI
             logger = new RichTextBoxLogger(rtbLog);
             LoadSavedSettings();
             UpdateInputMode();
+            UpdateResponsiveLayout();
+            Resize += (_, __) => UpdateResponsiveLayout();
         }
 
         private void BuildLayout()
@@ -73,14 +80,15 @@ namespace DrawingCollector.UI
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 1,
+                RowCount = 5,
                 Padding = new Padding(24),
                 BackColor = Color.FromArgb(244, 247, 252),
             };
             root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            root.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+            root.RowStyles.Add(new RowStyle(SizeType.Percent, 62f));
             root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 180f));
+            root.RowStyles.Add(new RowStyle(SizeType.Percent, 38f));
             Controls.Add(root);
 
             root.Controls.Add(new GradientHeader
@@ -102,80 +110,89 @@ namespace DrawingCollector.UI
 
         private Control BuildFlowHint()
         {
-            var flow = new TableLayoutPanel
+            var flow = new FlowLayoutPanel
             {
                 Dock = DockStyle.Top,
-                ColumnCount = 5,
                 AutoSize = true,
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = true,
                 Margin = new Padding(0, 0, 0, 14),
+                BackColor = Color.Transparent,
             };
-            for (int i = 0; i < 5; i++)
-                flow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20f));
 
-            flow.Controls.Add(MakeStep("1", "Entrada", "Cole ou selecione a Lista Geral do Solid Edge."), 0, 0);
-            flow.Controls.Add(MakeStep("2", "Pasta do projeto", "Escolha onde criar listas e arquivos finais."), 1, 0);
-            flow.Controls.Add(MakeStep("3", "Bancos", "Informe barramentos e, opcionalmente, revisões para gerar relatórios."), 2, 0);
-            flow.Controls.Add(MakeStep("4", "Pastas de origem", "Adicione as pastas do servidor onde estão PDF, DWG, DXF e STP."), 3, 0);
-            flow.Controls.Add(MakeStep("5", "Automático", "Gera listas e coleta Fornecedor + Barramento sem colar códigos de novo."), 4, 0);
+            flow.Controls.Add(MakeStep("1", "Entrada", "Cole ou selecione a Lista Geral do Solid Edge."));
+            flow.Controls.Add(MakeStep("2", "Pasta do projeto", "Escolha onde criar listas e arquivos finais."));
+            flow.Controls.Add(MakeStep("3", "Bancos", "Informe barramentos e, opcionalmente, revisões para gerar relatórios."));
+            flow.Controls.Add(MakeStep("4", "Pastas de origem", "Adicione as pastas do servidor onde estão PDF, DWG, DXF e STP."));
+            flow.Controls.Add(MakeStep("5", "Automático", "Gera listas e coleta Fornecedor + Barramento sem colar códigos de novo."));
             return flow;
         }
 
         private Control MakeStep(string number, string title, string text)
         {
-            var panel = new Panel
+            var panel = new TableLayoutPanel
             {
-                Dock = DockStyle.Fill,
-                Height = 78,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                ColumnCount = 2,
+                RowCount = 2,
                 BackColor = Color.White,
                 Padding = new Padding(14, 10, 14, 10),
-                Margin = new Padding(0, 0, 10, 0),
+                Margin = new Padding(0, 0, 10, 10),
+                MinimumSize = new Size(220, 0),
             };
+            panel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
 
             var badge = new CircleBadge(number, Palette.Primary)
             {
-                Size     = new Size(34, 34),
-                Location = new Point(14, 20),
+                Size = new Size(34, 34),
+                Margin = new Padding(0, 2, 10, 0),
             };
-            panel.Controls.Add(badge);
+            panel.Controls.Add(badge, 0, 0);
+            panel.SetRowSpan(badge, 2);
 
             panel.Controls.Add(new Label
             {
-                AutoSize = false,
+                AutoSize = true,
                 Text = title,
                 Font = new Font("Segoe UI Semibold", 10.2f),
                 ForeColor = Color.FromArgb(30, 36, 52),
-                Location = new Point(58, 11),
-                Size = new Size(200, 24),
-            });
+                Margin = new Padding(0, 0, 0, 2),
+            }, 1, 0);
 
             panel.Controls.Add(new Label
             {
-                AutoSize = false,
+                AutoSize = true,
                 Text = text,
                 Font = new Font("Segoe UI", 8.6f),
                 ForeColor = Color.FromArgb(90, 98, 116),
-                Location = new Point(58, 34),
-                Size = new Size(210, 38),
-            });
+                MaximumSize = new Size(230, 0),
+                Margin = new Padding(0),
+            }, 1, 1);
             return panel;
         }
 
         private Control BuildMainContent()
         {
-            var layout = new TableLayoutPanel
+            mainContentLayout = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 2,
+                RowCount = 1,
                 BackColor = Color.Transparent,
             };
-            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 62f));
-            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 38f));
-            layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+            mainContentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 62f));
+            mainContentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 38f));
+            mainContentLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
 
-            layout.Controls.Add(BuildInputCard(), 0, 0);
-            layout.Controls.Add(BuildSideCards(), 1, 0);
-            return layout;
+            mainInputCard = BuildInputCard();
+            mainSideCards = BuildSideCards();
+
+            mainContentLayout.Controls.Add(mainInputCard, 0, 0);
+            mainContentLayout.Controls.Add(mainSideCards, 1, 0);
+            return mainContentLayout;
         }
 
         private Control BuildInputCard()
@@ -186,9 +203,10 @@ namespace DrawingCollector.UI
             var modes = new FlowLayoutPanel
             {
                 Dock = DockStyle.Top,
-                Height = 42,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 FlowDirection = FlowDirection.LeftToRight,
-                WrapContents = false,
+                WrapContents = true,
                 BackColor = Color.White,
                 Margin = new Padding(0, 0, 0, 8),
             };
@@ -241,7 +259,7 @@ namespace DrawingCollector.UI
             txtPaste.TextChanged += (_, __) => UpdatePasteCount();
             panel.Controls.Add(txtPaste);
 
-            var footer = new Panel { Dock = DockStyle.Bottom, Height = 34, BackColor = Color.White, Padding = new Padding(0, 7, 0, 0) };
+            var footer = new Panel { Dock = DockStyle.Bottom, AutoSize = true, BackColor = Color.White, Padding = new Padding(0, 7, 0, 0) };
             lblPasteCount = new Label
             {
                 Dock = DockStyle.Left,
@@ -302,6 +320,7 @@ namespace DrawingCollector.UI
                 PlaceholderText = "Selecione ou arraste aqui o Excel da Lista Geral (.xlsx)...",
                 AllowDrop = true,
             };
+            ConfigurePathTextBox(txtExcelPath);
             txtExcelPath.TextChanged += (_, __) => OnExcelPathChanged();
             txtExcelPath.DragEnter += OnDragEnter;
             txtExcelPath.DragDrop += (_, e) =>
@@ -321,14 +340,16 @@ namespace DrawingCollector.UI
             fileRow.Controls.Add(btnSelectExcel, 1, 0);
             layout.Controls.Add(fileRow, 0, 0);
 
-            var sheetRow = new FlowLayoutPanel
+            var sheetRow = new TableLayoutPanel
             {
                 Dock = DockStyle.Top,
-                Height = 42,
-                FlowDirection = FlowDirection.LeftToRight,
-                WrapContents = false,
+                ColumnCount = 2,
                 BackColor = Color.White,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
             };
+            sheetRow.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            sheetRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
             sheetRow.Controls.Add(new Label
             {
                 Text = "Aba da lista:",
@@ -336,24 +357,27 @@ namespace DrawingCollector.UI
                 Font = new Font("Segoe UI Semibold", 9.7f),
                 ForeColor = Color.FromArgb(30, 36, 52),
                 Margin = new Padding(0, 6, 8, 0),
-            });
+            }, 0, 0);
 
             cmbSheets = new ComboBox
             {
                 DropDownStyle = ComboBoxStyle.DropDownList,
+                Dock = DockStyle.Left,
                 Width = 220,
-                Margin = new Padding(0, 2, 12, 0),
+                Margin = new Padding(0, 2, 0, 0),
             };
-            sheetRow.Controls.Add(cmbSheets);
-            sheetRow.Controls.Add(new Label
+            sheetRow.Controls.Add(cmbSheets, 1, 0);
+            layout.Controls.Add(sheetRow, 0, 1);
+
+            layout.Controls.Add(new Label
             {
                 Text = "Padrão esperado: linha 3 = cabeçalho, linha 4 em diante = itens.",
                 AutoSize = true,
                 Font = new Font("Segoe UI", 9f),
                 ForeColor = Color.FromArgb(96, 104, 122),
-                Margin = new Padding(0, 6, 0, 0),
-            });
-            layout.Controls.Add(sheetRow, 0, 1);
+                MaximumSize = new Size(520, 0),
+                Margin = new Padding(0, 4, 0, 0),
+            }, 0, 2);
             return panel;
         }
 
@@ -363,14 +387,12 @@ namespace DrawingCollector.UI
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 1,
+                RowCount = 3,
                 BackColor = Color.Transparent,
                 Margin = new Padding(14, 0, 0, 0),
             };
-            // Card 1 (Pasta do projeto): 220px — agora tem pasta + código/revisão + preview
-            side.RowStyles.Add(new RowStyle(SizeType.Absolute, 220));
-            // Card 2 (Bancos de controle): 252px (inalterado)
-            side.RowStyles.Add(new RowStyle(SizeType.Absolute, 252));
-            // Card 3 (Pastas de origem): preenche o restante
+            side.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            side.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             side.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
             side.Controls.Add(BuildProjectFolderCard(), 0, 0);
             side.Controls.Add(BuildBusbarDatabaseCard(), 0, 1);
@@ -409,6 +431,7 @@ namespace DrawingCollector.UI
                 Height = 32,
                 PlaceholderText = "Selecione a pasta do projeto...",
             };
+            ConfigurePathTextBox(txtProjectFolder);
             row.Controls.Add(txtProjectFolder, 0, 0);
 
             var btnSelect = new RoundedButton
@@ -509,15 +532,19 @@ namespace DrawingCollector.UI
 
             var stack = new TableLayoutPanel
             {
-                Dock = DockStyle.Fill,
+                Dock = DockStyle.Top,
                 ColumnCount = 1,
+                RowCount = 6,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 BackColor = Color.White,
             };
             stack.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             stack.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             stack.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             stack.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            stack.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+            stack.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            stack.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
             stack.Controls.Add(new Label
             {
@@ -546,6 +573,7 @@ namespace DrawingCollector.UI
                 Height = 32,
                 PlaceholderText = "Excel: Codigo | TemDobra...",
             };
+            ConfigurePathTextBox(txtBusbarDbPath);
             busbarRow.Controls.Add(txtBusbarDbPath, 0, 0);
 
             var btnSelectBusbar = new RoundedButton
@@ -565,7 +593,7 @@ namespace DrawingCollector.UI
                 AutoSize = true,
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 FlowDirection = FlowDirection.LeftToRight,
-                WrapContents = false,
+                WrapContents = true,
                 Margin = new Padding(0, 0, 0, 12),
                 BackColor = Color.White,
             };
@@ -620,6 +648,7 @@ namespace DrawingCollector.UI
                 Height = 32,
                 PlaceholderText = "Excel: Codigo | Revisao...",
             };
+            ConfigurePathTextBox(txtRevisionDbPath);
             revisionRow.Controls.Add(txtRevisionDbPath, 0, 0);
 
             var btnSelectRevision = new RoundedButton
@@ -643,7 +672,7 @@ namespace DrawingCollector.UI
                 AutoSize = true,
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 FlowDirection = FlowDirection.LeftToRight,
-                WrapContents = false,
+                WrapContents = true,
                 Margin = new Padding(0, 6, 0, 0),
                 BackColor = Color.White,
             };
@@ -685,7 +714,9 @@ namespace DrawingCollector.UI
                 Dock = DockStyle.Fill,
                 IntegralHeight = false,
                 Font = new Font("Segoe UI", 9.2f),
+                HorizontalScrollbar = true,
             };
+            lstRoots.MouseMove += (_, e) => UpdateRootsTooltip(lstRoots.IndexFromPoint(e.Location));
             body.Controls.Add(lstRoots, 0, 0);
 
             var buttons = new FlowLayoutPanel
@@ -694,7 +725,7 @@ namespace DrawingCollector.UI
                 AutoSize = true,
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 FlowDirection = FlowDirection.LeftToRight,
-                WrapContents = false,
+                WrapContents = true,
                 Margin = new Padding(0, 10, 0, 0),
                 BackColor = Color.White,
             };
@@ -729,23 +760,23 @@ namespace DrawingCollector.UI
             var row = new TableLayoutPanel
             {
                 Dock = DockStyle.Top,
-                ColumnCount = 2,
+                ColumnCount = 1,
+                RowCount = 2,
                 AutoSize = true,
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 Margin = new Padding(0, 14, 0, 14),
                 BackColor = Color.FromArgb(244, 247, 252),
             };
             row.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-            row.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
 
-            var left = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, AutoSize = true };
+            var left = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Margin = new Padding(0, 0, 0, 8) };
             lblStatus = new Label
             {
                 Dock = DockStyle.Top,
                 Text = "Pronto para finalizar: gerar listas e buscar arquivos automaticamente.",
                 Font = new Font("Segoe UI", 9.5f),
                 ForeColor = Color.FromArgb(96, 104, 122),
-                Height = 24,
+                AutoSize = true,
             };
             progress = new ProgressBar { Dock = DockStyle.Top, Height = 8, Style = ProgressBarStyle.Continuous, Maximum = 100 };
             left.Controls.Add(lblStatus, 0, 0);
@@ -754,11 +785,11 @@ namespace DrawingCollector.UI
 
             var actions = new FlowLayoutPanel
             {
-                Dock = DockStyle.Right,
+                Dock = DockStyle.Fill,
                 AutoSize = true,
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                FlowDirection = FlowDirection.LeftToRight,
-                WrapContents = false,
+                FlowDirection = FlowDirection.RightToLeft,
+                WrapContents = true,
             };
 
             btnRun = new RoundedButton
@@ -797,7 +828,7 @@ namespace DrawingCollector.UI
             btnBack.Click += (_, __) => Close();
             actions.Controls.Add(btnBack);
 
-            row.Controls.Add(actions, 1, 0);
+            row.Controls.Add(actions, 0, 1);
             return row;
         }
 
@@ -978,12 +1009,14 @@ namespace DrawingCollector.UI
                 if (string.Equals(item?.ToString(), picked, StringComparison.OrdinalIgnoreCase))
                     return;
             lstRoots.Items.Add(picked);
+            UpdateRootsHorizontalExtent();
         }
 
         private void RemoveRootFolder()
         {
             int idx = lstRoots.SelectedIndex;
             if (idx >= 0) lstRoots.Items.RemoveAt(idx);
+            UpdateRootsHorizontalExtent();
         }
 
 
@@ -1199,6 +1232,85 @@ namespace DrawingCollector.UI
                     cts = null;
                 }
             }, token);
+        }
+
+        private void ConfigurePathTextBox(TextBox textBox)
+        {
+            UpdateTooltip(textBox, textBox.Text);
+            textBox.TextChanged += (_, __) => UpdateTooltip(textBox, textBox.Text);
+        }
+
+        private void UpdateTooltip(Control control, string? text)
+        {
+            pathToolTip.SetToolTip(control, string.IsNullOrWhiteSpace(text) ? null : text.Trim());
+        }
+
+        private void UpdateRootsHorizontalExtent()
+        {
+            if (lstRoots == null) return;
+
+            int maxWidth = 0;
+            using var graphics = lstRoots.CreateGraphics();
+            foreach (var item in lstRoots.Items)
+            {
+                string text = item?.ToString() ?? string.Empty;
+                maxWidth = Math.Max(maxWidth, TextRenderer.MeasureText(graphics, text, lstRoots.Font).Width);
+            }
+
+            lstRoots.HorizontalExtent = maxWidth + 24;
+        }
+
+        private void UpdateRootsTooltip(int index)
+        {
+            if (lstRoots == null) return;
+
+            string tooltipText = index >= 0 && index < lstRoots.Items.Count
+                ? lstRoots.Items[index]?.ToString() ?? string.Empty
+                : string.Empty;
+
+            if (string.Equals(lastRootTooltipText, tooltipText, StringComparison.Ordinal))
+                return;
+
+            lastRootTooltipText = tooltipText;
+            UpdateTooltip(lstRoots, tooltipText);
+        }
+
+        private void UpdateResponsiveLayout()
+        {
+            if (mainContentLayout == null || mainInputCard == null || mainSideCards == null)
+                return;
+
+            bool stacked = ClientSize.Width < 1100;
+
+            mainContentLayout.SuspendLayout();
+            mainContentLayout.Controls.Clear();
+            mainContentLayout.ColumnStyles.Clear();
+            mainContentLayout.RowStyles.Clear();
+
+            if (stacked)
+            {
+                mainContentLayout.ColumnCount = 1;
+                mainContentLayout.RowCount = 2;
+                mainContentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+                mainContentLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 56f));
+                mainContentLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 44f));
+                mainSideCards.Margin = new Padding(0);
+                mainContentLayout.Controls.Add(mainInputCard, 0, 0);
+                mainContentLayout.Controls.Add(mainSideCards, 0, 1);
+            }
+            else
+            {
+                mainContentLayout.ColumnCount = 2;
+                mainContentLayout.RowCount = 1;
+                mainContentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 62f));
+                mainContentLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 38f));
+                mainContentLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+                mainSideCards.Margin = new Padding(14, 0, 0, 0);
+                mainContentLayout.Controls.Add(mainInputCard, 0, 0);
+                mainContentLayout.Controls.Add(mainSideCards, 1, 0);
+            }
+
+            mainContentLayout.ResumeLayout(true);
         }
 
         private void RunAutomaticFinalization(
